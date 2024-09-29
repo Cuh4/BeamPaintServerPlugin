@@ -127,16 +127,15 @@ local function sendClientTextureData(pid, target_id)
     local raw = LIVERY_DATA[TEXTURE_TRANSFER_PROGRESS[pid][target_id].livery_id]:sub(data.raw_offset + 1, math.min(data.raw_offset + MAX_DATA_VALUES_PP, #LIVERY_DATA[TEXTURE_TRANSFER_PROGRESS[pid][target_id].livery_id]))
     data.raw = base64.encode(raw)
     MP.TriggerClientEventJson(pid, "BP_receiveTextureData", data)
+    print("sendClientTextureData("..tostring(pid)..","..tostring(target_id).."): progress before: " .. tostring(TEXTURE_TRANSFER_PROGRESS[pid][target_id].progress))
     TEXTURE_TRANSFER_PROGRESS[pid][target_id].progress = TEXTURE_TRANSFER_PROGRESS[pid][target_id].progress + MAX_DATA_VALUES_PP
+    print("sendClientTextureData("..tostring(pid)..","..tostring(target_id).."): progress after: " .. tostring(TEXTURE_TRANSFER_PROGRESS[pid][target_id].progress))
 end
 
 function initSendClientTextureData(pid, target_id, livery_id)
-    local thiscall = "initSendClientTextureData("..tostring(pid)..","..tostring(target_id)..","..tostring(livery_id) .. ")"
-    Util.DebugStartProfile(thiscall)
     TEXTURE_TRANSFER_PROGRESS[pid] = TEXTURE_TRANSFER_PROGRESS[pid] or {}
     TEXTURE_TRANSFER_PROGRESS[pid][target_id] = { progress = 0, livery_id = livery_id }
     sendClientTextureData(pid, target_id)
-    Util.DebugStopProfile(thiscall)
 end
 
 function sendEveryoneLivery(serverID, liveryID)
@@ -162,9 +161,13 @@ function updatePlayerRoleAll(targetPid, targetVid)
 end
 
 function BP_textureDataReceived(pid, target_id)
+    print("BP_textureDataReceived("..tostring(pid)..","..tostring(target_id).."): start")
     if TEXTURE_TRANSFER_PROGRESS[pid][target_id].progress < #LIVERY_DATA[TEXTURE_TRANSFER_PROGRESS[pid][target_id].livery_id] then
+        print("BP_textureDataReceived("..tostring(pid)..","..tostring(target_id).."): progress: "..tostring(TEXTURE_TRANSFER_PROGRESS[pid][target_id].progress))
+        print("BP_textureDataReceived("..tostring(pid)..","..tostring(target_id).."): livery data progress: "..tostring(#LIVERY_DATA[TEXTURE_TRANSFER_PROGRESS[pid][target_id].livery_id]))
         sendClientTextureData(pid, target_id)
     else
+        print("BP_textureDataReceived("..tostring(pid)..","..tostring(target_id).."): Triggering BP_markTextureComplete")
         MP.TriggerClientEventJson(pid, "BP_markTextureComplete", { target_id = target_id })
     end
 end
